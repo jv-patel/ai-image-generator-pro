@@ -71,3 +71,8 @@ https://github.com/jv-patel
 ---
 
 ⭐ If you like this project, don't forget to star the repository.
+## 📸 Screenshots
+
+### Home
+
+<img src="screenshots/home.png" width="900">
