@@ -5,38 +5,25 @@ from PIL import Image
 
 class AIImageGenerator:
     """
-    AI Image Generator Backend
+    AI Image Generator Backend V2
     """
 
-    API_URL = "https://text-to-img.apis-bj-devs.workers.dev/"
+    CURRENT_API = "https://text-to-img.apis-bj-devs.workers.dev/"
 
     def __init__(self):
         self.session = requests.Session()
+        self.timeout = 90
 
-    def generate(
-        self,
-        prompt: str,
-        style: str = "Default",
-        image_count: int = 4,
-        aspect_ratio: str = "1:1",
-    ):
-        """
-        Generate AI images.
-        Returns a list of PIL Image objects.
-        """
+    def _download_image(self, url):
+        response = self.session.get(url, timeout=self.timeout)
+        response.raise_for_status()
+        return Image.open(BytesIO(response.content))
 
-        if not prompt.strip():
-            raise ValueError("Prompt cannot be empty.")
-
-        final_prompt = prompt.strip()
-
-        if style != "Default":
-            final_prompt = f"{prompt}, {style} style"
-
+    def _generate_current_api(self, prompt):
         response = self.session.get(
-            self.API_URL,
-            params={"prompt": final_prompt},
-            timeout=90,
+            self.CURRENT_API,
+            params={"prompt": prompt},
+            timeout=self.timeout,
         )
 
         response.raise_for_status()
@@ -51,7 +38,6 @@ class AIImageGenerator:
         urls = []
 
         if result:
-
             if isinstance(result[0], str):
                 urls = result
 
@@ -62,21 +48,40 @@ class AIImageGenerator:
                     if "url" in item
                 ]
 
+        return urls
+
+    def generate(
+        self,
+        prompt,
+        style="Default",
+        image_count=4,
+        aspect_ratio="1:1",
+        provider="Current API",
+    ):
+
+        if not prompt.strip():
+            raise ValueError("Prompt cannot be empty.")
+
+        final_prompt = prompt.strip()
+
+        if style != "Default":
+            final_prompt += f", {style} style"
+
+        # Future-ready
+        if aspect_ratio != "1:1":
+            final_prompt += f", aspect ratio {aspect_ratio}"
+
+        if provider == "Current API":
+            urls = self._generate_current_api(final_prompt)
+        else:
+            raise Exception("Provider not supported yet.")
+
         if not urls:
             raise Exception("No images received.")
 
         images = []
 
         for url in urls[:image_count]:
-
-            img = self.session.get(url, timeout=60)
-
-            img.raise_for_status()
-
-            image = Image.open(
-                BytesIO(img.content)
-            )
-
-            images.append(image)
+            images.append(self._download_image(url))
 
         return images
