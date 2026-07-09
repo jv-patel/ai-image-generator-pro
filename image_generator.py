@@ -3,24 +3,40 @@ from io import BytesIO
 from PIL import Image
 
 
-API_URL = "https://text-to-img.apis-bj-devs.workers.dev/"
-
-
 class AIImageGenerator:
+    """
+    AI Image Generator Backend
+    """
+
+    API_URL = "https://text-to-img.apis-bj-devs.workers.dev/"
 
     def __init__(self):
         self.session = requests.Session()
 
-    def generate_images(self, prompt):
+    def generate(
+        self,
+        prompt: str,
+        style: str = "Default",
+        image_count: int = 4,
+        aspect_ratio: str = "1:1",
+    ):
         """
-        Generate AI images from a text prompt.
-        Returns a list of PIL Images.
+        Generate AI images.
+        Returns a list of PIL Image objects.
         """
 
+        if not prompt.strip():
+            raise ValueError("Prompt cannot be empty.")
+
+        final_prompt = prompt.strip()
+
+        if style != "Default":
+            final_prompt = f"{prompt}, {style} style"
+
         response = self.session.get(
-            API_URL,
-            params={"prompt": prompt},
-            timeout=60,
+            self.API_URL,
+            params={"prompt": final_prompt},
+            timeout=90,
         )
 
         response.raise_for_status()
@@ -32,31 +48,34 @@ class AIImageGenerator:
 
         result = data.get("result", [])
 
-        image_urls = []
+        urls = []
 
         if result:
 
             if isinstance(result[0], str):
-                image_urls = result
+                urls = result
 
             elif isinstance(result[0], dict):
+                urls = [
+                    item["url"]
+                    for item in result
+                    if "url" in item
+                ]
 
-                for item in result:
-                    if "url" in item:
-                        image_urls.append(item["url"])
-
-        if not image_urls:
-            raise Exception("No images received from API.")
+        if not urls:
+            raise Exception("No images received.")
 
         images = []
 
-        for url in image_urls:
+        for url in urls[:image_count]:
 
             img = self.session.get(url, timeout=60)
 
             img.raise_for_status()
 
-            image = Image.open(BytesIO(img.content))
+            image = Image.open(
+                BytesIO(img.content)
+            )
 
             images.append(image)
 
