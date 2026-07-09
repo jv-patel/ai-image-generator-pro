@@ -54,3 +54,46 @@ prompt = st.text_area(
 )
 
 generate = st.button("✨ Generate Images")
+
+if generate:
+
+    if not prompt.strip():
+        st.warning("⚠️ Please enter a prompt.")
+    else:
+
+        try:
+
+            with st.spinner("🎨 Generating AI Images..."):
+
+                images = generator.generate_images(prompt)
+
+            st.success(f"✅ Generated {len(images)} image(s)!")
+
+            cols = st.columns(2)
+
+            for index, image in enumerate(images):
+
+                with cols[index % 2]:
+
+                    st.image(
+                        image,
+                        use_container_width=True
+                    )
+
+                    from io import BytesIO
+
+                    buffer = BytesIO()
+
+                    image.save(buffer, format="PNG")
+
+                    st.download_button(
+                        label=f"📥 Download Image {index+1}",
+                        data=buffer.getvalue(),
+                        file_name=f"ai_image_{index+1}.png",
+                        mime="image/png",
+                        use_container_width=True,
+                    )
+
+        except Exception as e:
+
+            st.error(f"❌ {e}")
