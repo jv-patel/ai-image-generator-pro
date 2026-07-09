@@ -170,5 +170,5 @@ if generate:
 # ---------------------------------
 st.divider()
 
-st.caption("🎨 AI Image Generator Pro")
-st.caption("Built with ❤️ using Python + Streamlit")
+st.caption("This project Create In Python")
+st.caption("Built with Jeel Patel")
