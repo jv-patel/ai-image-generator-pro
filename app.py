@@ -1,99 +1,131 @@
 import streamlit as st
 from image_generator import AIImageGenerator
+from utils import image_to_bytes, create_zip
 
 st.set_page_config(
     page_title="AI Image Generator Pro",
     page_icon="🎨",
-    layout="wide"
+    layout="wide",
 )
 
-# ---------- Custom CSS ----------
 st.markdown("""
 <style>
+
 .stApp{
-    background:#0f172a;
+background:#0f172a;
 }
 
-.title{
-    text-align:center;
-    color:white;
-    font-size:45px;
-    font-weight:bold;
+.main-title{
+text-align:center;
+font-size:50px;
+font-weight:bold;
+color:white;
 }
 
 .subtitle{
-    text-align:center;
-    color:#cbd5e1;
-    margin-bottom:30px;
+text-align:center;
+color:#cbd5e1;
+margin-bottom:25px;
 }
 
 div.stButton > button{
-    width:100%;
-    border-radius:10px;
-    height:50px;
-    font-size:18px;
+width:100%;
+height:52px;
+border-radius:12px;
+font-size:18px;
+font-weight:bold;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown(
-    "<div class='title'>🎨 AI Image Generator Pro</div>",
-    unsafe_allow_html=True
+"<h1 class='main-title'>🎨 AI Image Generator Pro</h1>",
+unsafe_allow_html=True
 )
 
 st.markdown(
-    "<div class='subtitle'>Generate beautiful AI images from your imagination.</div>",
-    unsafe_allow_html=True
+"<p class='subtitle'>Generate beautiful AI images using text prompts.</p>",
+unsafe_allow_html=True
 )
+
+with st.sidebar:
+
+    st.header("⚙️ Settings")
+
+    style = st.selectbox(
+        "Style",
+        [
+            "Default",
+            "Realistic",
+            "Anime",
+            "Cartoon",
+            "Oil Painting",
+            "Cyberpunk"
+        ]
+    )
+
+    image_count = st.selectbox(
+        "Number of Images",
+        [1,2,4]
+    )
 
 generator = AIImageGenerator()
 
 prompt = st.text_area(
-    "Enter your prompt",
-    placeholder="Example: A futuristic cyberpunk city at sunset..."
+    "Enter Prompt",
+    placeholder="Example: A futuristic city at sunset..."
 )
 
-generate = st.button("✨ Generate Images")
-
-if generate:
+if st.button("✨ Generate Images"):
 
     if not prompt.strip():
-        st.warning("⚠️ Please enter a prompt.")
+
+        st.warning("Please enter a prompt.")
+
     else:
 
         try:
 
-            with st.spinner("🎨 Generating AI Images..."):
+            with st.spinner("Generating Images..."):
 
-                images = generator.generate_images(prompt)
+                images = generator.generate(
+                    prompt=prompt,
+                    style=style,
+                    image_count=image_count
+                )
 
-            st.success(f"✅ Generated {len(images)} image(s)!")
+            st.success("Images generated successfully!")
 
             cols = st.columns(2)
 
-            for index, image in enumerate(images):
+            for i, image in enumerate(images):
 
-                with cols[index % 2]:
+                with cols[i % 2]:
 
                     st.image(
                         image,
                         use_container_width=True
                     )
 
-                    from io import BytesIO
-
-                    buffer = BytesIO()
-
-                    image.save(buffer, format="PNG")
-
                     st.download_button(
-                        label=f"📥 Download Image {index+1}",
-                        data=buffer.getvalue(),
-                        file_name=f"ai_image_{index+1}.png",
+                        label=f"📥 Download Image {i+1}",
+                        data=image_to_bytes(image),
+                        file_name=f"ai_image_{i+1}.png",
                         mime="image/png",
-                        use_container_width=True,
+                        use_container_width=True
                     )
+
+            st.divider()
+
+            st.download_button(
+                "📦 Download All Images (ZIP)",
+                data=create_zip(images),
+                file_name="ai_images.zip",
+                mime="application/zip",
+                use_container_width=True
+            )
 
         except Exception as e:
 
-            st.error(f"❌ {e}")
+            st.error(str(e))
