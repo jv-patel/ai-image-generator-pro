@@ -164,7 +164,7 @@ st.markdown(
     """
     <div style="text-align:center;color:gray;">
         <p>AI Image Generator Pro</p>
-        <p>Built with Python & Streamlit</p>
+        <p>Devloped By Jeel Patel</p>
     </div>
     """,
     unsafe_allow_html=True
